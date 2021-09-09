@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "NewPurchase",
+  "namespace": "com.example.sb.store.schema",
+  "fields": [
+    {
+      "name": "id",
+      "type": "string"
+    },
+    {
+      "name": "clientId",
+      "type": "string"
+    }
+  ]
+}

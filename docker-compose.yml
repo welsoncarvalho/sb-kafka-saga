@@ -1,0 +1,71 @@
+version: '3'
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper-server
+    networks:
+      - broker-kafka
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka-1:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka-1-server
+    networks:
+      - broker-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - 9192:9192
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-1:29092,PLAINTEXT_HOST://localhost:9192
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:latest
+    container_name: schema-registry-server
+    networks:
+      - broker-kafka
+    depends_on:
+      - kafka-1
+    ports:
+      - 8081:8081
+    environment:
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka-1:29092
+      SCHEMA_REGISTRY_HOST_NAME: 0.0.0.0
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+
+  kafdrop:
+    image: obsidiandynamics/kafdrop:latest
+    container_name: kafdrop-server
+    networks:
+      - broker-kafka
+    depends_on:
+      - kafka-1
+    ports:
+      - 19000:9000
+    environment:
+      KAFKA_BROKERCONNECT: kafka-1:29092
+
+  mongo:
+    image: mongo:latest
+    container_name: mongo-server
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: u_mongo
+      MONGO_INITDB_ROOT_PASSWORD: p_mongo
+    networks:
+      - database
+    ports:
+      - 27017:27017
+
+networks:
+  broker-kafka:
+    driver: bridge
+  database:
+    driver: bridge
